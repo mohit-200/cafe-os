@@ -1,0 +1,22 @@
+# CAFÉ OS build: container image → Artifact Registry. Runs as the dedicated cafe-os-build service account.
+#   gcloud builds submit --config=cloudbuild.yaml --substitutions=_TAG=<tag> --region=asia-south1 \
+#     --service-account=projects/builder-pop-up-515511/serviceAccounts/cafe-os-build@builder-pop-up-515511.iam.gserviceaccount.com \
+#     --gcs-source-staging-dir=gs://builder-pop-up-515511-cafe-os-src/source
+substitutions:
+  _REGION: asia-south1
+  _REPO: cafe-os
+  _IMAGE: cafe-os
+  _TAG: manual
+
+steps:
+  - id: build
+    name: gcr.io/cloud-builders/docker
+    args: ["build", "-t", "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/${_IMAGE}:${_TAG}", "."]
+
+images:
+  - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/${_IMAGE}:${_TAG}
+
+options:
+  logging: CLOUD_LOGGING_ONLY  # required with a user-specified service account; no logs bucket needed
+  # Default machine type on purpose: it's the one covered by Cloud Build's free build minutes.
+timeout: 900s
